@@ -142,11 +142,6 @@ language governing permissions and limitations under the License. -->
             <artifactId>nifi-kafka-nar</artifactId>
             <type>nar</type>
         </dependency>
-        <dependency>
-            <groupId>org.apache.nifi</groupId>
-            <artifactId>nifi-ldap-iaa-providers-nar</artifactId>
-            <type>nar</type>
-        </dependency>
     </dependencies>
 
     <properties>
