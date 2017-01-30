@@ -8,8 +8,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
@@ -92,6 +94,9 @@ public class ListAzureBlobStorage extends AbstractProcessor {
             .description("All FlowFiles that are received are routed to success")
             .build();
 
+    public static final Set<Relationship> relationships = Collections.unmodifiableSet(
+            new HashSet<>(Collections.singletonList(REL_SUCCESS)));
+
     public static final List<PropertyDescriptor> properties = Collections.unmodifiableList(Arrays.asList(AzureConstants.ACCOUNT_NAME, AzureConstants.ACCOUNT_KEY, AzureConstants.CONTAINER, PREFIX));
 
     @Override
@@ -111,7 +116,12 @@ public class ListAzureBlobStorage extends AbstractProcessor {
     public void onPrimaryNodeChange(final PrimaryNodeState newState) {
         justElectedPrimaryNode = (newState == PrimaryNodeState.ELECTED_PRIMARY_NODE);
     }
-    
+
+    @Override
+    public Set<Relationship> getRelationships() {
+        return relationships;
+    }
+
     @OnScheduled
     public final void updateState(final ProcessContext context) throws IOException {
         // Check if state already exists for this path. If so, we have already migrated the state.
