@@ -133,26 +133,16 @@
                 }
             }
 
-            // determine if the row matches the selected source group
-            var matchesGroup = true;
-            if (matchesFilter && matchesTags) {
-                var bundleGroup = $('#processor-bundle-group-combo').combo('getSelectedOption');
-                if (nfCommon.isDefinedAndNotNull(bundleGroup) && bundleGroup.value !== '') {
-                    matchesGroup = (item.bundle.group === bundleGroup.value);
-                }
-            }
-
             // determine if this row should be visible
-            var matches = matchesFilter && matchesTags && matchesGroup;
+            var matches = matchesFilter && matchesTags;
 
             // if this row is currently selected and its being filtered
             if (matches === false && $('#selected-processor-type').text() === item['type']) {
                 // clear the selected row
-                $('#processor-type-description').attr('title', '').text('');
-                $('#processor-type-name').attr('title', '').text('');
-                $('#processor-type-bundle').attr('title', '').text('');
+                $('#processor-type-description').text('');
+                $('#processor-type-name').text('');
                 $('#selected-processor-name').text('');
-                $('#selected-processor-type').text('').removeData('bundle');
+                $('#selected-processor-type').text('');
 
                 // clear the active cell the it can be reselected when its included
                 var processTypesGrid = $('#processor-types-table').data('gridInstance');
@@ -189,6 +179,24 @@
         };
 
         /**
+         * Sorts the specified data using the specified sort details.
+         *
+         * @param {object} sortDetails
+         * @param {object} data
+         */
+        var sort = function (sortDetails, data) {
+            // defines a function for sorting
+            var comparer = function (a, b) {
+                var aString = nfCommon.isDefinedAndNotNull(a[sortDetails.columnId]) ? a[sortDetails.columnId] : '';
+                var bString = nfCommon.isDefinedAndNotNull(b[sortDetails.columnId]) ? b[sortDetails.columnId] : '';
+                return aString === bString ? 0 : aString > bString ? 1 : -1;
+            };
+
+            // perform the sort
+            data.sort(comparer, sortDetails.sortAsc);
+        };
+
+        /**
          * Get the text out of the filter field. If the filter field doesn't
          * have any text it will contain the text 'filter list' so this method
          * accounts for that.
@@ -204,11 +212,6 @@
             // clear the selected tag cloud
             $('#processor-tag-cloud').tagcloud('clearSelectedTags');
 
-            // reset the group combo
-            $('#processor-bundle-group-combo').combo('setSelectedOption', {
-                value: ''
-            });
-
             // clear any filter strings
             $('#processor-type-filter').val('');
 
@@ -216,11 +219,10 @@
             applyFilter();
 
             // clear the selected row
-            $('#processor-type-description').attr('title', '').text('');
-            $('#processor-type-name').attr('title', '').text('');
-            $('#processor-type-bundle').attr('title', '').text('');
+            $('#processor-type-description').text('');
+            $('#processor-type-name').text('');
             $('#selected-processor-name').text('');
-            $('#selected-processor-type').text('').removeData('bundle');
+            $('#selected-processor-type').text('');
 
             // unselect any current selection
             var processTypesGrid = $('#processor-types-table').data('gridInstance');
@@ -233,10 +235,9 @@
          *
          * @argument {string} name              The processor name.
          * @argument {string} processorType     The processor type.
-         * @argument {object} bundle            The processor bundle.
          * @argument {object} pt                The point that the processor was dropped.
          */
-        var createProcessor = function (name, processorType, bundle, pt) {
+        var createProcessor = function (name, processorType, pt) {
             var processorEntity = {
                 'revision': nfClient.getRevision({
                     'revision': {
@@ -245,7 +246,6 @@
                 }),
                 'component': {
                     'type': processorType,
-                    'bundle': bundle,
                     'name': name,
                     'position': {
                         'x': pt.x,
@@ -317,14 +317,6 @@
                                 resizable: true
                             },
                             {
-                                id: 'version',
-                                name: 'Version',
-                                field: 'version',
-                                formatter: nfCommon.typeVersionFormatter,
-                                sortable: true,
-                                resizable: true
-                            },
-                            {
                                 id: 'tags',
                                 name: 'Tags',
                                 field: 'tags',
@@ -354,7 +346,7 @@
                         processorTypesData.setFilter(filter);
 
                         // initialize the sort
-                        nfCommon.sortType({
+                        sort({
                             columnId: 'type',
                             sortAsc: true
                         }, processorTypesData);
@@ -365,7 +357,7 @@
                         processorTypesGrid.registerPlugin(new Slick.AutoTooltips());
                         processorTypesGrid.setSortColumn('type', true);
                         processorTypesGrid.onSort.subscribe(function (e, args) {
-                            nfCommon.sortType({
+                            sort({
                                 columnId: args.sortCol.field,
                                 sortAsc: args.sortAsc
                             }, processorTypesData);
@@ -388,14 +380,10 @@
                                             .ellipsis();
                                     }
 
-                                    var bundle = nfCommon.formatBundle(processorType.bundle);
-                                    var type = nfCommon.formatType(processorType);
-
                                     // populate the dom
-                                    $('#processor-type-name').text(type).attr('title', type);
-                                    $('#processor-type-bundle').text(bundle).attr('title', bundle);
+                                    $('#processor-type-name').text(processorType.label).ellipsis();
                                     $('#selected-processor-name').text(processorType.label);
-                                    $('#selected-processor-type').text(processorType.type).data('bundle', processorType.bundle);
+                                    $('#selected-processor-type').text(processorType.type);
 
                                     // refresh the buttons based on the current selection
                                     $('#new-processor-dialog').modal('refreshButtons');
@@ -455,7 +443,6 @@
                             dataType: 'json'
                         }).done(function (response) {
                             var tags = [];
-                            var groups = d3.set();
 
                             // begin the update
                             processorTypesData.beginUpdate();
@@ -464,15 +451,11 @@
                             $.each(response.processorTypes, function (i, documentedType) {
                                 var type = documentedType.type;
 
-                                // record the group
-                                groups.add(documentedType.bundle.group);
-
                                 // create the row for the processor type
                                 processorTypesData.addItem({
                                     id: i,
                                     label: nfCommon.substringAfterLast(type, '.'),
                                     type: type,
-                                    bundle: documentedType.bundle,
                                     description: nfCommon.escapeHtml(documentedType.description),
                                     usageRestriction: nfCommon.escapeHtml(documentedType.usageRestriction),
                                     tags: documentedType.tags.join(', ')
@@ -484,12 +467,8 @@
                                 });
                             });
 
-                            // end the update
+                            // end the udpate
                             processorTypesData.endUpdate();
-
-                            // resort
-                            processorTypesData.reSort();
-                            processorTypesGrid.invalidate();
 
                             // set the total number of processors
                             $('#total-processor-types, #displayed-processor-types').text(response.processorTypes.length);
@@ -499,24 +478,6 @@
                                 tags: tags,
                                 select: applyFilter,
                                 remove: applyFilter
-                            });
-
-                            // build the combo options
-                            var options = [{
-                                text: 'all groups',
-                                value: ''
-                            }];
-                            groups.forEach(function (group) {
-                                options.push({
-                                    text: group,
-                                    value: group
-                                });
-                            });
-
-                            // initialize the bundle group combo
-                            $('#processor-bundle-group-combo').combo({
-                                options: options,
-                                select: applyFilter
                             });
                         }).fail(nfErrorHandler.handleAjaxError);
                     }
@@ -636,7 +597,6 @@
                     // get the type of processor currently selected
                     var name = $('#selected-processor-name').text();
                     var processorType = $('#selected-processor-type').text();
-                    var bundle = $('#selected-processor-type').data('bundle');
 
                     // ensure something was selected
                     if (name === '' || processorType === '') {
@@ -646,7 +606,7 @@
                         });
                     } else {
                         // create the new processor
-                        createProcessor(name, processorType, bundle, pt);
+                        createProcessor(name, processorType, pt);
                     }
 
                     // hide the dialog
@@ -655,7 +615,6 @@
 
                 // get the grid reference
                 var grid = $('#processor-types-table').data('gridInstance');
-                var dataview = grid.getData();
 
                 // add the processor when its double clicked in the table
                 var gridDoubleClick = function (e, args) {
@@ -663,7 +622,7 @@
 
                     if (isSelectable(processorType)) {
                         $('#selected-processor-name').text(processorType.label);
-                        $('#selected-processor-type').text(processorType.type).data('bundle', processorType.bundle);
+                        $('#selected-processor-type').text(processorType.type);
 
                         addProcessor();
                     }
@@ -688,7 +647,7 @@
                             var item = grid.getDataItem(selected[0]);
                             return isSelectable(item) === false;
                         } else {
-                            return dataview.getLength() === 0;
+                            return grid.getData().getLength() === 0;
                         }
                     },
                     handler: {
@@ -741,13 +700,9 @@
 
                 // adjust the grid canvas now that its been rendered
                 grid.resizeCanvas();
-
-                // auto select the first row if possible
-                if (dataview.getLength() > 0) {
-                    grid.setSelectedRows([0]);
-                }
+                grid.setSelectedRows([0]);
             }
-        };
+        }
 
         var processorComponent = new ProcessorComponent();
         return processorComponent;

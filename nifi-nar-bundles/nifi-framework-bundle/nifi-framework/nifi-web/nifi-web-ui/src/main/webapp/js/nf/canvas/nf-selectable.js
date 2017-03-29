@@ -21,24 +21,21 @@
     if (typeof define === 'function' && define.amd) {
         define(['d3',
                 'nf.ng.Bridge',
-                'nf.ContextMenu',
-                'nf.CanvasUtils'],
-            function (d3, nfNgBridge, nfContextMenu, nfCanvasUtils) {
-                return (nf.Selectable = factory(d3, nfNgBridge, nfContextMenu, nfCanvasUtils));
+                'nf.ContextMenu'],
+            function (d3, nfNgBridge, nfContextMenu) {
+                return (nf.Selectable = factory(d3, nfNgBridge, nfContextMenu));
             });
     } else if (typeof exports === 'object' && typeof module === 'object') {
         module.exports = (nf.Selectable =
             factory(require('d3'),
                 require('nf.ng.Bridge'),
-                require('nf.ContextMenu'),
-                require('nf.CanvasUtils')));
+                require('nf.ContextMenu')));
     } else {
         nf.Selectable = factory(root.d3,
             root.nf.ng.Bridge,
-            root.nf.ContextMenu,
-            root.nf.CanvasUtils);
+            root.nf.ContextMenu);
     }
-}(this, function (d3, nfNgBridge, nfContextMenu, nfCanvasUtils) {
+}(this, function (d3, nfNgBridge, nfContextMenu) {
     'use strict';
 
     var nfSelectable = {
@@ -80,9 +77,6 @@
             components.on('mousedown.selection', function () {
                 // get the clicked component to update selection
                 nfSelectable.select(d3.select(this));
-
-                // update URL deep linking params
-                nfCanvasUtils.setURLParameters();
             });
         }
     };

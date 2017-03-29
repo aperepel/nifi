@@ -17,8 +17,6 @@
 package org.apache.nifi.authorization;
 
 import org.apache.nifi.authorization.resource.Authorizable;
-import org.apache.nifi.web.api.dto.BundleDTO;
-import org.apache.nifi.web.api.dto.FlowSnippetDTO;
 
 public interface AuthorizableLookup {
 
@@ -45,7 +43,7 @@ public interface AuthorizableLookup {
      * @param type processor type
      * @return authorizable
      */
-    ConfigurableComponentAuthorizable getProcessorByType(String type, BundleDTO bundle);
+    ConfigurableComponentAuthorizable getProcessorByType(String type);
 
     /**
      * Get the authorizable for querying Provenance.
@@ -146,11 +144,10 @@ public interface AuthorizableLookup {
      * controller service. The intent of this method is to provide access to the PropertyDescriptors
      * prior to the component being created.
      *
-     * @param type controller service type
-     * @param bundle bundle
+     * @param type processor type
      * @return authorizable
      */
-    ConfigurableComponentAuthorizable getControllerServiceByType(String type, BundleDTO bundle);
+    ConfigurableComponentAuthorizable getControllerServiceByType(String type);
 
     /**
      * Get the authorizable referencing component.
@@ -174,11 +171,10 @@ public interface AuthorizableLookup {
      * reporting task. The intent of this method is to provide access to the PropertyDescriptors
      * prior to the component being created.
      *
-     * @param type reporting task type
-     * @param bundle bundle
+     * @param type processor type
      * @return authorizable
      */
-    ConfigurableComponentAuthorizable getReportingTaskByType(String type, BundleDTO bundle);
+    ConfigurableComponentAuthorizable getReportingTaskByType(String type);
 
     /**
      * Get the authorizable Template.
@@ -186,15 +182,7 @@ public interface AuthorizableLookup {
      * @param id template id
      * @return authorizable
      */
-    Authorizable getTemplate(String id);
-
-    /**
-     * Get the authorizable Template contents.
-     *
-     * @param snippet the template contents
-     * @return authorizable
-     */
-    TemplateContentsAuthorizable getTemplateContents(FlowSnippetDTO snippet);
+    TemplateAuthorizable getTemplate(String id);
 
     /**
      * Get the authorizable connectable. Note this does not include RemoteGroupPorts.

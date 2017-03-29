@@ -41,7 +41,6 @@
         <module>nifi-documentation</module>
         <module>nifi-authorizer</module>
         <module>nifi-properties-loader</module>
-        <module>nifi-standard-prioritizers</module>
     </modules>
     <dependencies>
         <dependency>

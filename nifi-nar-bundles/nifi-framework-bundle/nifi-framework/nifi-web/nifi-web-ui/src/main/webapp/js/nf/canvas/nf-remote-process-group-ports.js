@@ -251,34 +251,26 @@
 
         // if can modify, support updating the remote group port
         if (nfCanvasUtils.canModify(remoteProcessGroup)) {
-
-            var createTransmissionSwitch = function (port) {
-                var transmissionSwitch;
-                if (port.connected === true) {
-                    if (port.transmitting === true) {
-                        transmissionSwitch = (nfNgBridge.injector.get('$compile')($('<md-switch style="margin:0px" class="md-primary enabled-active-transmission" aria-label="Toggle port transmission"></md-switch>'))(nfNgBridge.rootScope));
-                        transmissionSwitch.click();
-                    } else {
-                        if (port.exists === true) {
-                            transmissionSwitch = (nfNgBridge.injector.get('$compile')($('<md-switch style="margin:0px" class="md-primary enabled-inactive-transmission" aria-label="Toggle port transmission"></md-switch>'))(nfNgBridge.rootScope));
-                        } else {
-                            (nfNgBridge.injector.get('$compile')($('<md-switch ng-disabled="true" style="margin:0px" class="md-primary disabled-inactive-transmission" aria-label="Toggle port transmission"></md-switch>'))(nfNgBridge.rootScope));
-                        }
-                    }
+            // show the enabled transmission switch
+            var transmissionSwitch;
+            if (port.connected === true) {
+                if (port.transmitting === true) {
+                    transmissionSwitch = (nfNgBridge.injector.get('$compile')($('<md-switch style="margin:0px" class="md-primary enabled-active-transmission" aria-label="Toggle port transmission"></md-switch>'))(nfNgBridge.rootScope)).appendTo(portContainerEditContainer);
+                    transmissionSwitch.click();
                 } else {
-                    if (port.transmitting === true) {
-                        (nfNgBridge.injector.get('$compile')($('<md-switch style="margin:0px" class="md-primary disabled-active-transmission" aria-label="Toggle port transmission"></md-switch>'))(nfNgBridge.rootScope));
+                    if (port.exists === true) {
+                        transmissionSwitch = (nfNgBridge.injector.get('$compile')($('<md-switch style="margin:0px" class="md-primary enabled-inactive-transmission" aria-label="Toggle port transmission"></md-switch>'))(nfNgBridge.rootScope)).appendTo(portContainerEditContainer);
                     } else {
-                        (nfNgBridge.injector.get('$compile')($('<md-switch ng-disabled="true" style="margin:0px" class="md-primary disabled-inactive-transmission" aria-label="Toggle port transmission"></md-switch>'))(nfNgBridge.rootScope));
+                        (nfNgBridge.injector.get('$compile')($('<md-switch ng-disabled="true" style="margin:0px" class="md-primary disabled-inactive-transmission" aria-label="Toggle port transmission"></md-switch>'))(nfNgBridge.rootScope)).appendTo(portContainerEditContainer);
                     }
                 }
-
-                return transmissionSwitch;
-            };
-
-            // show the enabled transmission switch
-            var transmissionSwitch = createTransmissionSwitch(port);
-            transmissionSwitch.appendTo(portContainerEditContainer);
+            } else {
+                if (port.transmitting === true) {
+                    (nfNgBridge.injector.get('$compile')($('<md-switch style="margin:0px" class="md-primary disabled-active-transmission" aria-label="Toggle port transmission"></md-switch>'))(nfNgBridge.rootScope)).appendTo(portContainerEditContainer);
+                } else {
+                    (nfNgBridge.injector.get('$compile')($('<md-switch ng-disabled="true" style="margin:0px" class="md-primary disabled-inactive-transmission" aria-label="Toggle port transmission"></md-switch>'))(nfNgBridge.rootScope)).appendTo(portContainerEditContainer);
+                }
+            }
 
             // only support configuration when the remote port exists
             if (port.exists === true && port.connected === true) {
@@ -308,7 +300,8 @@
 
             // only allow modifications to transmission when the swtich is defined
             if (nfCommon.isDefinedAndNotNull(transmissionSwitch)) {
-                var transmissionSwitchClickFunction = function () {
+                // create toggle for changing transmission state
+                transmissionSwitch.click(function () {
                     // get the component being edited
                     var remoteProcessGroupId = $('#remote-process-group-ports-id').text();
                     var remoteProcessGroupData = d3.select('#id-' + remoteProcessGroupId).datum();
@@ -380,14 +373,6 @@
                             }
                         }
                     }).fail(function (xhr, status, error) {
-                        // create replacement switch
-                        var newTransmissionSwitch = createTransmissionSwitch(port);
-                        // add click handler
-                        newTransmissionSwitch.click(transmissionSwitchClickFunction);
-                        //replace DOM element
-                        transmissionSwitch.replaceWith(newTransmissionSwitch);
-                        // update transmissionSwitch variable to reference the new switch
-                        transmissionSwitch = newTransmissionSwitch;
                         if (xhr.status === 400) {
                             var errors = xhr.responseText.split('\n');
 
@@ -406,10 +391,7 @@
                             nfErrorHandler.handleAjaxError(xhr, status, error);
                         }
                     });
-                };
-
-                // create toggle for changing transmission state
-                transmissionSwitch.click(transmissionSwitchClickFunction);
+                });
             }
         } else {
             // show the disabled transmission switch

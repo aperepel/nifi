@@ -28,7 +28,6 @@ import java.util.zip.GZIPOutputStream;
 
 import org.apache.nifi.cluster.protocol.DataFlow;
 import org.apache.nifi.controller.FlowController;
-import org.apache.nifi.controller.MissingBundleException;
 import org.apache.nifi.controller.StandardFlowSynchronizer;
 import org.apache.nifi.controller.UninheritableFlowException;
 import org.apache.nifi.controller.serialization.FlowSerializationException;
@@ -78,7 +77,7 @@ public final class StandardXMLFlowConfigurationDAO implements FlowConfigurationD
 
     @Override
     public synchronized void load(final FlowController controller, final DataFlow dataFlow)
-            throws IOException, FlowSerializationException, FlowSynchronizationException, UninheritableFlowException, MissingBundleException {
+            throws IOException, FlowSerializationException, FlowSynchronizationException, UninheritableFlowException {
 
         final FlowSynchronizer flowSynchronizer = new StandardFlowSynchronizer(encryptor, nifiProperties);
         controller.synchronize(flowSynchronizer, dataFlow);

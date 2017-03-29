@@ -29,7 +29,7 @@
 		<dependency>
 			<groupId>org.eclipse.jetty.websocket</groupId>
 			<artifactId>websocket-server</artifactId>
-			<version>${jetty.version}</version>
+			<version>9.3.13.v20161014</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>

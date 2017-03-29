@@ -33,6 +33,7 @@ import org.eclipse.jetty.server.Authentication;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.util.security.Password;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -704,12 +705,14 @@ public abstract class TestInvokeHttpCommon {
         final String response = bundle.getAttribute(InvokeHTTP.RESPONSE_BODY);
         assertEquals("<html>\n" +
                 "<head>\n" +
-                "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\"/>\n" +
-                "<title>Error 401 Unauthorized</title>\n" +
+                "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=ISO-8859-1\"/>\n" +
+                "<title>Error 401 </title>\n" +
                 "</head>\n" +
-                "<body><h2>HTTP ERROR 401</h2>\n" +
+                "<body>\n" +
+                "<h2>HTTP ERROR: 401</h2>\n" +
                 "<p>Problem accessing /status/200. Reason:\n" +
-                "<pre>    Unauthorized</pre></p><hr><a href=\"http://eclipse.org/jetty\">Powered by Jetty:// 9.4.2.v20170220</a><hr/>\n\n" +
+                "<pre>    Unauthorized</pre></p>\n" +
+                "<hr /><a href=\"http://eclipse.org/jetty\">Powered by Jetty:// 9.3.9.v20160517</a><hr/>\n" +
                 "</body>\n" +
                 "</html>\n", response);
     }
@@ -1784,17 +1787,17 @@ public abstract class TestInvokeHttpCommon {
 
         private DigestAuthenticator digestAuthenticator;
 
-        private DigestAuthHandler() throws Exception {
+        private DigestAuthHandler() {
             digestAuthenticator = new DigestAuthenticator();
             ConstraintSecurityHandler securityHandler = new ConstraintSecurityHandler();
 
-            final HashLoginService hashLoginService = new HashLoginService("realm", "src/test/resources/TestInvokeHttp/realm.properties");
-            hashLoginService.start();
-
+            HashLoginService hashLoginService = new HashLoginService("realm");
+            hashLoginService.putUser("basic_user", new Password("basic_password"), new String[]{"realm"});
             securityHandler.setLoginService(hashLoginService);
             securityHandler.setIdentityService(new DefaultIdentityService());
             digestAuthenticator.setConfiguration(securityHandler);
         }
+
 
         @Override
         public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse

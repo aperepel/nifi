@@ -295,24 +295,16 @@ public class ControllerResource extends ApplicationResource {
                 lookup -> {
                     authorizeController(RequestAction.WRITE);
 
-                    ConfigurableComponentAuthorizable authorizable = null;
-                    try {
-                        authorizable = lookup.getReportingTaskByType(requestReportingTask.getType(), requestReportingTask.getBundle());
+                    final ConfigurableComponentAuthorizable authorizable = lookup.getReportingTaskByType(requestReportingTask.getType());
+                    if (authorizable.isRestricted()) {
+                        lookup.getRestrictedComponents().authorize(authorizer, RequestAction.WRITE, NiFiUserUtils.getNiFiUser());
+                    }
 
-                        if (authorizable.isRestricted()) {
-                            lookup.getRestrictedComponents().authorize(authorizer, RequestAction.WRITE, NiFiUserUtils.getNiFiUser());
-                        }
-
-                        if (requestReportingTask.getProperties() != null) {
-                            AuthorizeControllerServiceReference.authorizeControllerServiceReferences(requestReportingTask.getProperties(), authorizable, authorizer, lookup);
-                        }
-                    } finally {
-                        if (authorizable != null) {
-                            authorizable.cleanUpResources();
-                        }
+                    if (requestReportingTask.getProperties() != null) {
+                        AuthorizeControllerServiceReference.authorizeControllerServiceReferences(requestReportingTask.getProperties(), authorizable, authorizer, lookup);
                     }
                 },
-                () -> serviceFacade.verifyCreateReportingTask(requestReportingTask),
+                null,
                 (reportingTaskEntity) -> {
                     final ReportingTaskDTO reportingTask = reportingTaskEntity.getComponent();
 
@@ -401,24 +393,16 @@ public class ControllerResource extends ApplicationResource {
                 lookup -> {
                     authorizeController(RequestAction.WRITE);
 
-                    ConfigurableComponentAuthorizable authorizable = null;
-                    try {
-                        authorizable = lookup.getControllerServiceByType(requestControllerService.getType(), requestControllerService.getBundle());
+                    final ConfigurableComponentAuthorizable authorizable = lookup.getControllerServiceByType(requestControllerService.getType());
+                    if (authorizable.isRestricted()) {
+                        lookup.getRestrictedComponents().authorize(authorizer, RequestAction.WRITE, NiFiUserUtils.getNiFiUser());
+                    }
 
-                        if (authorizable.isRestricted()) {
-                            lookup.getRestrictedComponents().authorize(authorizer, RequestAction.WRITE, NiFiUserUtils.getNiFiUser());
-                        }
-
-                        if (requestControllerService.getProperties() != null) {
-                            AuthorizeControllerServiceReference.authorizeControllerServiceReferences(requestControllerService.getProperties(), authorizable, authorizer, lookup);
-                        }
-                    } finally {
-                        if (authorizable != null) {
-                            authorizable.cleanUpResources();
-                        }
+                    if (requestControllerService.getProperties() != null) {
+                        AuthorizeControllerServiceReference.authorizeControllerServiceReferences(requestControllerService.getProperties(), authorizable, authorizer, lookup);
                     }
                 },
-                () -> serviceFacade.verifyCreateControllerService(requestControllerService),
+                null,
                 (controllerServiceEntity) -> {
                     final ControllerServiceDTO controllerService = controllerServiceEntity.getComponent();
 
@@ -577,7 +561,7 @@ public class ControllerResource extends ApplicationResource {
             )
             @PathParam("id") String id,
             @ApiParam(
-                    value = "The node configuration. The only configuration that will be honored at this endpoint is the status.",
+                    value = "The node configuration. The only configuration that will be honored at this endpoint is the status or primary flag.",
                     required = true
             ) NodeEntity nodeEntity) {
 

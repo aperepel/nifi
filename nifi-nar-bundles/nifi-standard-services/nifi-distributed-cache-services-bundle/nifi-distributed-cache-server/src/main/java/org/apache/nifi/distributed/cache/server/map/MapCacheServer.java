@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 
@@ -125,12 +124,6 @@ public class MapCacheServer extends AbstractCacheServer {
                 final byte[] key = readValue(dis);
                 final boolean removed = cache.remove(ByteBuffer.wrap(key)) != null;
                 dos.writeBoolean(removed);
-                break;
-            }
-            case "removeByPattern": {
-                final String pattern = dis.readUTF();
-                final Map<ByteBuffer, ByteBuffer> removed = cache.removeByPattern(pattern);
-                dos.writeLong(removed == null ? 0 : removed.size());
                 break;
             }
             case "fetch": {

@@ -35,7 +35,6 @@ import org.apache.nifi.ui.extension.UiExtensionMapping;
 import org.apache.nifi.web.NiFiServiceFacade;
 import org.apache.nifi.web.Revision;
 import org.apache.nifi.web.UiExtensionType;
-import org.apache.nifi.web.api.dto.BundleDTO;
 import org.apache.nifi.web.api.dto.ComponentStateDTO;
 import org.apache.nifi.web.api.dto.PositionDTO;
 import org.apache.nifi.web.api.dto.ProcessorConfigDTO;
@@ -122,12 +121,10 @@ public class ProcessorResource extends ApplicationResource {
             if (StringUtils.isNotBlank(customUiUrl)) {
                 config.setCustomUiUrl(customUiUrl);
             } else {
-                final BundleDTO bundle = processor.getBundle();
-
                 // see if this processor has any ui extensions
                 final UiExtensionMapping uiExtensionMapping = (UiExtensionMapping) servletContext.getAttribute("nifi-ui-extensions");
-                if (uiExtensionMapping.hasUiExtension(processor.getType(), bundle.getGroup(), bundle.getArtifact(), bundle.getVersion())) {
-                    final List<UiExtension> uiExtensions = uiExtensionMapping.getUiExtension(processor.getType(), bundle.getGroup(), bundle.getArtifact(), bundle.getVersion());
+                if (uiExtensionMapping.hasUiExtension(processor.getType())) {
+                    final List<UiExtension> uiExtensions = uiExtensionMapping.getUiExtension(processor.getType());
                     for (final UiExtension uiExtension : uiExtensions) {
                         if (UiExtensionType.ProcessorConfiguration.equals(uiExtension.getExtensionType())) {
                             config.setCustomUiUrl(uiExtension.getContextPath() + "/configure");

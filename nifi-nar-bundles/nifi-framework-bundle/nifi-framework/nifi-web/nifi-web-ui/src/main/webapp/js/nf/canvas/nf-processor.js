@@ -136,8 +136,8 @@
         // processor name
         processor.append('text')
             .attr({
-                'x': 75,
-                'y': 18,
+                'x': 72,
+                'y': 23,
                 'width': 210,
                 'height': 14,
                 'class': 'processor-name'
@@ -198,9 +198,6 @@
         updated.select('rect.border')
             .classed('unauthorized', function (d) {
                 return d.permissions.canRead === false;
-            })
-            .classed('ghost', function (d) {
-                return d.permissions.canRead === true && d.component.extensionMissing === true;
             });
 
         // processor body authorization
@@ -233,19 +230,9 @@
                     details.append('text')
                         .attr({
                             'class': 'processor-type',
-                            'x': 75,
-                            'y': 32,
-                            'width': 230,
-                            'height': 12
-                        });
-
-                    // processor type
-                    details.append('text')
-                        .attr({
-                            'class': 'processor-bundle',
-                            'x': 75,
-                            'y': 45,
-                            'width': 230,
+                            'x': 72,
+                            'y': 37,
+                            'width': 236,
                             'height': 12
                         });
 
@@ -503,7 +490,7 @@
                     details.append('text')
                         .attr({
                             'class': 'active-thread-count-icon',
-                            'y': 45
+                            'y': 42
                         })
                         .text('\ue83f');
 
@@ -511,7 +498,7 @@
                     details.append('text')
                         .attr({
                             'class': 'active-thread-count',
-                            'y': 45
+                            'y': 42
                         });
 
                     // ---------
@@ -553,8 +540,8 @@
                             // apply ellipsis to the processor name as necessary
                             nfCanvasUtils.ellipsis(processorName, d.component.name);
                         }).append('title').text(function (d) {
-                            return d.component.name;
-                        });
+                        return d.component.name;
+                    });
 
                     // update the processor type
                     processor.select('text.processor-type')
@@ -565,33 +552,16 @@
                             processorType.text(null).selectAll('title').remove();
 
                             // apply ellipsis to the processor type as necessary
-                            nfCanvasUtils.ellipsis(processorType, nfCommon.formatType(d.component));
+                            nfCanvasUtils.ellipsis(processorType, nfCommon.substringAfterLast(d.component.type, '.'));
                         }).append('title').text(function (d) {
-                            return nfCommon.formatType(d.component);
-                        });
-
-                    // update the processor bundle
-                    processor.select('text.processor-bundle')
-                        .each(function (d) {
-                            var processorBundle = d3.select(this);
-
-                            // reset the processor type to handle any previous state
-                            processorBundle.text(null).selectAll('title').remove();
-
-                            // apply ellipsis to the processor type as necessary
-                            nfCanvasUtils.ellipsis(processorBundle, nfCommon.formatBundle(d.component.bundle));
-                        }).append('title').text(function (d) {
-                            return nfCommon.formatBundle(d.component.bundle);
-                        });
+                        return nfCommon.substringAfterLast(d.component.type, '.');
+                    });
                 } else {
                     // clear the processor name
                     processor.select('text.processor-name').text(null);
 
                     // clear the processor type
                     processor.select('text.processor-type').text(null);
-
-                    // clear the processor bundle
-                    processor.select('text.processor-bundle').text(null);
                 }
 
                 // populate the stats

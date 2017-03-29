@@ -17,7 +17,6 @@
 package org.apache.nifi.integration.accesscontrol;
 
 import com.sun.jersey.api.client.ClientResponse;
-import org.apache.nifi.bundle.Bundle;
 import org.apache.nifi.integration.NiFiWebApiTest;
 import org.apache.nifi.integration.util.NiFiTestAuthorizer;
 import org.apache.nifi.integration.util.NiFiTestServer;
@@ -64,9 +63,8 @@ public class AccessControlHelper {
         flowXmlPath = props.getProperty(NiFiProperties.FLOW_CONFIGURATION_FILE);
 
         // load extensions
-        final Bundle systemBundle = ExtensionManager.createSystemBundle(props);
         NarClassLoaders.getInstance().init(props.getFrameworkWorkingDirectory(), props.getExtensionsWorkingDirectory());
-        ExtensionManager.discoverExtensions(systemBundle, NarClassLoaders.getInstance().getBundles());
+        ExtensionManager.discoverExtensions(NarClassLoaders.getInstance().getExtensionClassLoaders());
 
         // start the server
         server = new NiFiTestServer("src/main/webapp", CONTEXT_PATH, props);

@@ -396,18 +396,11 @@ public class StandardNiFiServiceFacade implements NiFiServiceFacade {
     }
 
     @Override
-    public void verifyCreateProcessor(ProcessorDTO processorDTO) {
-        processorDAO.verifyCreate(processorDTO);
-    }
-
-    @Override
     public void verifyUpdateProcessor(final ProcessorDTO processorDTO) {
         // if group does not exist, then the update request is likely creating it
         // so we don't verify since it will fail
         if (processorDAO.hasProcessor(processorDTO.getId())) {
             processorDAO.verifyUpdate(processorDTO);
-        } else {
-            verifyCreateProcessor(processorDTO);
         }
     }
 
@@ -451,18 +444,11 @@ public class StandardNiFiServiceFacade implements NiFiServiceFacade {
     }
 
     @Override
-    public void verifyCreateControllerService(ControllerServiceDTO controllerServiceDTO) {
-        controllerServiceDAO.verifyCreate(controllerServiceDTO);
-    }
-
-    @Override
     public void verifyUpdateControllerService(final ControllerServiceDTO controllerServiceDTO) {
         // if service does not exist, then the update request is likely creating it
         // so we don't verify since it will fail
         if (controllerServiceDAO.hasControllerService(controllerServiceDTO.getId())) {
             controllerServiceDAO.verifyUpdate(controllerServiceDTO);
-        } else {
-            verifyCreateControllerService(controllerServiceDTO);
         }
     }
 
@@ -477,18 +463,11 @@ public class StandardNiFiServiceFacade implements NiFiServiceFacade {
     }
 
     @Override
-    public void verifyCreateReportingTask(ReportingTaskDTO reportingTaskDTO) {
-        reportingTaskDAO.verifyCreate(reportingTaskDTO);
-    }
-
-    @Override
     public void verifyUpdateReportingTask(final ReportingTaskDTO reportingTaskDTO) {
         // if tasks does not exist, then the update request is likely creating it
         // so we don't verify since it will fail
         if (reportingTaskDAO.hasReportingTask(reportingTaskDTO.getId())) {
             reportingTaskDAO.verifyUpdate(reportingTaskDTO);
-        } else {
-            verifyCreateReportingTask(reportingTaskDTO);
         }
     }
 
@@ -1678,7 +1657,7 @@ public class StandardNiFiServiceFacade implements NiFiServiceFacade {
                     }
 
                     try {
-                        final ControllerService controllerService = controllerFacade.createTemporaryControllerService(dto.getType(), dto.getBundle()).getControllerServiceImplementation();
+                        final ControllerService controllerService = controllerFacade.createTemporaryControllerService(dto.getType()).getControllerServiceImplementation();
                         controllerService.getPropertyDescriptors().forEach(descriptor -> {
                             if (dto.getProperties().get(descriptor.getName()) == null) {
                                 dto.getProperties().put(descriptor.getName(), descriptor.getDefaultValue());
@@ -1702,7 +1681,7 @@ public class StandardNiFiServiceFacade implements NiFiServiceFacade {
                     }
 
                     try {
-                        final ProcessorNode processorNode = controllerFacade.createTemporaryProcessor(dto.getType(), dto.getBundle());
+                        final ProcessorNode processorNode = controllerFacade.createTemporaryProcessor(dto.getType());
                         processorNode.getPropertyDescriptors().forEach(descriptor -> {
                             if (config.getProperties().get(descriptor.getName()) == null) {
                                 config.getProperties().put(descriptor.getName(), descriptor.getDefaultValue());
@@ -1795,12 +1774,10 @@ public class StandardNiFiServiceFacade implements NiFiServiceFacade {
     }
 
     @Override
-    public FlowEntity createTemplateInstance(final String groupId, final Double originX, final Double originY, final String templateEncodingVersion,
-                                             final FlowSnippetDTO requestSnippet, final String idGenerationSeed) {
-
+    public FlowEntity createTemplateInstance(final String groupId, final Double originX, final Double originY, final String templateId, final String idGenerationSeed) {
         // instantiate the template - there is no need to make another copy of the flow snippet since the actual template
         // was copied and this dto is only used to instantiate it's components (which as already completed)
-        final FlowSnippetDTO snippet = templateDAO.instantiateTemplate(groupId, originX, originY, templateEncodingVersion, requestSnippet, idGenerationSeed);
+        final FlowSnippetDTO snippet = templateDAO.instantiateTemplate(groupId, originX, originY, templateId, idGenerationSeed);
 
         // save the flow
         controllerFacade.save();
@@ -2388,19 +2365,18 @@ public class StandardNiFiServiceFacade implements NiFiServiceFacade {
     }
 
     @Override
-    public Set<DocumentedTypeDTO> getProcessorTypes(final String bundleGroup, final String bundleArtifact, final String type) {
-        return controllerFacade.getFlowFileProcessorTypes(bundleGroup, bundleArtifact, type);
+    public Set<DocumentedTypeDTO> getProcessorTypes() {
+        return controllerFacade.getFlowFileProcessorTypes();
     }
 
     @Override
-    public Set<DocumentedTypeDTO> getControllerServiceTypes(final String serviceType, final String serviceBundleGroup, final String serviceBundleArtifact, final String serviceBundleVersion,
-                                                            final String bundleGroup, final String bundleArtifact, final String type) {
-        return controllerFacade.getControllerServiceTypes(serviceType, serviceBundleGroup, serviceBundleArtifact, serviceBundleVersion, bundleGroup, bundleArtifact, type);
+    public Set<DocumentedTypeDTO> getControllerServiceTypes(final String serviceType) {
+        return controllerFacade.getControllerServiceTypes(serviceType);
     }
 
     @Override
-    public Set<DocumentedTypeDTO> getReportingTaskTypes(final String bundleGroup, final String bundleArtifact, final String type) {
-        return controllerFacade.getReportingTaskTypes(bundleGroup, bundleArtifact, type);
+    public Set<DocumentedTypeDTO> getReportingTaskTypes() {
+        return controllerFacade.getReportingTaskTypes();
     }
 
     @Override

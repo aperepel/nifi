@@ -17,21 +17,17 @@
 package org.apache.nifi.fingerprint;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.nifi.bundle.BundleCoordinate;
 import org.apache.nifi.components.ConfigurableComponent;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.controller.ControllerService;
 import org.apache.nifi.controller.FlowController;
 import org.apache.nifi.controller.exception.ProcessorInstantiationException;
 import org.apache.nifi.controller.serialization.FlowFromDOMFactory;
-import org.apache.nifi.util.LoggingXmlParserErrorHandler;
 import org.apache.nifi.encrypt.StringEncryptor;
 import org.apache.nifi.nar.ExtensionManager;
 import org.apache.nifi.processor.Processor;
 import org.apache.nifi.reporting.ReportingTask;
-import org.apache.nifi.util.BundleUtils;
 import org.apache.nifi.util.DomUtils;
-import org.apache.nifi.web.api.dto.BundleDTO;
 import org.apache.nifi.web.api.dto.ControllerServiceDTO;
 import org.apache.nifi.web.api.dto.ReportingTaskDTO;
 import org.slf4j.Logger;
@@ -106,7 +102,6 @@ public class FingerprintFactory {
         try {
             documentBuilderFactory.setSchema(schema);
             flowConfigDocBuilder = documentBuilderFactory.newDocumentBuilder();
-            flowConfigDocBuilder.setErrorHandler(new LoggingXmlParserErrorHandler("Flow Configuration", logger));
         } catch (final Exception e) {
             throw new RuntimeException("Failed to create document builder for flow configuration.", e);
         }
@@ -342,18 +337,13 @@ public class FingerprintFactory {
         // annotation data
         appendFirstValue(builder, DomUtils.getChildNodesByTagName(processorElem, "annotationData"));
 
-        // get the bundle details if possible
-        final BundleDTO bundle = FlowFromDOMFactory.getBundle(DomUtils.getChild(processorElem, "bundle"));
-        addBundleFingerprint(builder, bundle);
-
         // create an instance of the Processor so that we know the default property values
         Processor processor = null;
         try {
             if (controller != null) {
-                final BundleCoordinate coordinate = getCoordinate(className, bundle);
-                processor = controller.createProcessor(className, UUID.randomUUID().toString(), coordinate, false).getProcessor();
+                processor = controller.createProcessor(className, UUID.randomUUID().toString(), false).getProcessor();
             }
-        } catch (ProcessorInstantiationException | IllegalStateException e) {
+        } catch (ProcessorInstantiationException e) {
             logger.warn("Unable to create Processor of type {} due to {}; its default properties will be fingerprinted instead of being ignored.", className, e.toString());
             if (logger.isDebugEnabled()) {
                 logger.warn("", e);
@@ -575,9 +565,6 @@ public class FingerprintFactory {
         builder.append(dto.getId());
         builder.append(dto.getType());
         builder.append(dto.getName());
-
-        addBundleFingerprint(builder, dto.getBundle());
-
         builder.append(dto.getComments());
         builder.append(dto.getAnnotationData());
         builder.append(dto.getState());
@@ -586,8 +573,7 @@ public class FingerprintFactory {
         ControllerService controllerService = null;
         try {
             if (controller != null) {
-                final BundleCoordinate coordinate = getCoordinate(dto.getType(), dto.getBundle());
-                controllerService = controller.createControllerService(dto.getType(), UUID.randomUUID().toString(), coordinate, false).getControllerServiceImplementation();
+                controllerService = controller.createControllerService(dto.getType(), UUID.randomUUID().toString(), false).getControllerServiceImplementation();
             }
         } catch (Exception e) {
             logger.warn("Unable to create ControllerService of type {} due to {}; its default properties will be fingerprinted instead of being ignored.", dto.getType(), e.toString());
@@ -610,37 +596,10 @@ public class FingerprintFactory {
         }
     }
 
-    private void addBundleFingerprint(final StringBuilder builder, final BundleDTO bundle) {
-        if (bundle != null) {
-            builder.append(bundle.getGroup());
-            builder.append(bundle.getArtifact());
-            builder.append(bundle.getVersion());
-        } else {
-            builder.append("MISSING_BUNDLE");
-        }
-    }
-
-    private BundleCoordinate getCoordinate(final String type, final BundleDTO dto) {
-        BundleCoordinate coordinate;
-        try {
-            coordinate = BundleUtils.getCompatibleBundle(type, dto);
-        } catch (final IllegalStateException e) {
-            if (dto == null) {
-                coordinate = BundleCoordinate.UNKNOWN_COORDINATE;
-            } else {
-                coordinate = new BundleCoordinate(dto.getGroup(), dto.getArtifact(), dto.getVersion());
-            }
-        }
-        return coordinate;
-    }
-
     private void addReportingTaskFingerprint(final StringBuilder builder, final ReportingTaskDTO dto, final FlowController controller) {
         builder.append(dto.getId());
         builder.append(dto.getType());
         builder.append(dto.getName());
-
-        addBundleFingerprint(builder, dto.getBundle());
-
         builder.append(dto.getComments());
         builder.append(dto.getSchedulingPeriod());
         builder.append(dto.getSchedulingStrategy());
@@ -650,8 +609,7 @@ public class FingerprintFactory {
         ReportingTask reportingTask = null;
         try {
             if (controller != null) {
-                final BundleCoordinate coordinate = getCoordinate(dto.getType(), dto.getBundle());
-                reportingTask = controller.createReportingTask(dto.getType(), UUID.randomUUID().toString(), coordinate, false, false).getReportingTask();
+                reportingTask = controller.createReportingTask(dto.getType(), UUID.randomUUID().toString(), false, false).getReportingTask();
             }
         } catch (Exception e) {
             logger.warn("Unable to create ReportingTask of type {} due to {}; its default properties will be fingerprinted instead of being ignored.", dto.getType(), e.toString());

@@ -580,7 +580,7 @@ public class SystemDiagnosticsSnapshotDTO implements Cloneable {
     @XmlType(name = "versionInfo")
     public static class VersionInfoDTO implements Cloneable {
 
-        private String niFiVersion;
+        private String nifiVersion;
         private String javaVendor;
         private String javaVersion;
         private String osName;
@@ -593,11 +593,11 @@ public class SystemDiagnosticsSnapshotDTO implements Cloneable {
 
         @ApiModelProperty("The version of this NiFi.")
         public String getNiFiVersion() {
-            return niFiVersion;
+            return nifiVersion;
         }
 
-        public void setNiFiVersion(String niFiVersion) {
-            this.niFiVersion = niFiVersion;
+        public void setNiFiVersion(String nifiVersion) {
+            this.nifiVersion = nifiVersion;
         }
 
         @ApiModelProperty("Java JVM vendor")
