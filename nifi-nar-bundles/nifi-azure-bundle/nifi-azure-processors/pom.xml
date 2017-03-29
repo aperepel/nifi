@@ -81,5 +81,10 @@
             <version>${powermock.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.nifi</groupId>
+            <artifactId>nifi-standard-processors</artifactId>
+            <version>${version}</version>
+        </dependency>
     </dependencies>
 </project>
