@@ -29,7 +29,7 @@ public final class AzureConstants {
                     "be fetched dynamically from a flow file attribute, care must be taken to restrict access to " +
                     "the event provenance data (e.g. by strictly controlling the policies governing provenance for this Processor). " +
                     "In addition, the provenance repositories may be put on encrypted disk partitions.")
-            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR).expressionLanguageSupported(true).required(true).sensitive(true).build();
+            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR).expressionLanguageSupported(true).required(false).sensitive(true).build();
 
     public static final PropertyDescriptor ACCOUNT_NAME = new PropertyDescriptor.Builder().name("storage-account-name").displayName("Storage Account Name")
             .description("The storage account name.  There are certain risks in allowing the account name to be stored as a flowfile" +
@@ -44,6 +44,8 @@ public final class AzureConstants {
 
     // use HTTPS by default as per MSFT recommendation
     public static final String FORMAT_DEFAULT_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=%s;AccountKey=%s";
+    public static final String FORMAT_BASE_URI = "https://%s.blob.core.windows.net";
+
 
     private AzureConstants() {
         // do not instantiate
