@@ -17,9 +17,12 @@
 package org.apache.nifi.processors.azure;
 
 import org.apache.nifi.components.PropertyDescriptor;
+import org.apache.nifi.components.ValidationContext;
+import org.apache.nifi.components.ValidationResult;
 import org.apache.nifi.processor.util.StandardValidators;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,11 +32,20 @@ public abstract class AbstractAzureBlobProcessor extends AbstractAzureProcessor 
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR).expressionLanguageSupported(true).required(true).defaultValue("${azure.blobname}").build();
 
     private static final List<PropertyDescriptor> PROPERTIES = Collections
-            .unmodifiableList(Arrays.asList(AzureConstants.ACCOUNT_NAME, AzureConstants.ACCOUNT_KEY, AzureConstants.CONTAINER, BLOB));
+            .unmodifiableList(Arrays.asList(
+                    AzureConstants.CONTAINER,
+                    AzureConstants.PROP_SAS_TOKEN,
+                    AzureConstants.ACCOUNT_NAME,
+                    AzureConstants.ACCOUNT_KEY,
+                    BLOB));
 
     @Override
     protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
         return PROPERTIES;
     }
 
+    @Override
+    protected Collection<ValidationResult> customValidate(ValidationContext validationContext) {
+        return AzureConstants.validateCredentialProperties(validationContext);
+    }
 }

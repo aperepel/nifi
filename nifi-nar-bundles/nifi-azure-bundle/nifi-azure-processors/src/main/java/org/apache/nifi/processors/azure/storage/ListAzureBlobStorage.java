@@ -16,9 +16,6 @@
  */
 package org.apache.nifi.processors.azure.storage;
 
-import com.microsoft.azure.storage.CloudStorageAccount;
-import com.microsoft.azure.storage.StorageCredentials;
-import com.microsoft.azure.storage.StorageCredentialsSharedAccessSignature;
 import com.microsoft.azure.storage.StorageUri;
 import com.microsoft.azure.storage.blob.BlobListingDetails;
 import com.microsoft.azure.storage.blob.BlobProperties;
@@ -27,7 +24,6 @@ import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoft.azure.storage.blob.ListBlobItem;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.nifi.annotation.behavior.InputRequirement;
 import org.apache.nifi.annotation.behavior.InputRequirement.Requirement;
@@ -50,9 +46,6 @@ import org.apache.nifi.processors.azure.storage.utils.BlobInfo;
 import org.apache.nifi.processors.azure.storage.utils.BlobInfo.Builder;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -88,19 +81,10 @@ public class ListAzureBlobStorage extends AbstractListProcessor<BlobInfo> {
     private static final PropertyDescriptor PROP_PREFIX = new PropertyDescriptor.Builder().name("prefix").displayName("Prefix").description("Search prefix for listing")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR).expressionLanguageSupported(true).required(false).build();
 
-    public static final PropertyDescriptor PROP_SAS_TOKEN = new PropertyDescriptor.Builder()
-            .name("SAS String")
-            .description("Shared Access Signature string, including the leading '?'. Specify either SAS (recommended) or Account Key")
-            .required(false)
-            .expressionLanguageSupported(true)
-            .sensitive(true)
-            .addValidator(StandardValidators.NON_EMPTY_VALIDATOR)
-            .build();
-
 
     private static final List<PropertyDescriptor> PROPERTIES = Collections.unmodifiableList(Arrays.asList(
             AzureConstants.CONTAINER,
-            PROP_SAS_TOKEN,
+            AzureConstants.PROP_SAS_TOKEN,
             AzureConstants.ACCOUNT_NAME,
             AzureConstants.ACCOUNT_KEY,
             PROP_PREFIX));
@@ -112,19 +96,7 @@ public class ListAzureBlobStorage extends AbstractListProcessor<BlobInfo> {
 
     @Override
     protected Collection<ValidationResult> customValidate(ValidationContext validationContext) {
-        final List<ValidationResult> results = new ArrayList<>();
-
-        String sasToken = validationContext.getProperty(PROP_SAS_TOKEN).getValue();
-        String acctName = validationContext.getProperty(AzureConstants.ACCOUNT_KEY).getValue();
-        if ((StringUtils.isBlank(sasToken) && StringUtils.isBlank(acctName))
-                || (StringUtils.isNotBlank(sasToken) && StringUtils.isNotBlank(acctName))) {
-            results.add(new ValidationResult.Builder().subject("Azure Credentials")
-                        .valid(false)
-                        .explanation("either Azure Account Key or Shared Access Signature required, but not both")
-                        .build());
-        }
-
-        return results;
+        return AzureConstants.validateCredentialProperties(validationContext);
     }
 
     @Override
@@ -154,7 +126,7 @@ public class ListAzureBlobStorage extends AbstractListProcessor<BlobInfo> {
         return PROP_PREFIX.equals(property)
                    || AzureConstants.ACCOUNT_NAME.equals(property)
                    || AzureConstants.CONTAINER.equals(property)
-                   || PROP_SAS_TOKEN.equals(property);
+                   || AzureConstants.PROP_SAS_TOKEN.equals(property);
     }
 
     @Override
@@ -171,7 +143,7 @@ public class ListAzureBlobStorage extends AbstractListProcessor<BlobInfo> {
         }
         final List<BlobInfo> listing = new ArrayList<>();
         try {
-            CloudBlobClient blobClient = createCloudBlobClient(context);
+            CloudBlobClient blobClient = AzureConstants.createCloudBlobClient(context, getLogger());
             CloudBlobContainer container = blobClient.getContainerReference(containerName);
 
             for (ListBlobItem blob : container.listBlobs(prefix, true, EnumSet.of(BlobListingDetails.METADATA), null, null)) {
@@ -206,33 +178,6 @@ public class ListAzureBlobStorage extends AbstractListProcessor<BlobInfo> {
         return listing;
     }
 
-    private CloudBlobClient createCloudBlobClient(ProcessContext context) {
-        final String accountName = context.getProperty(AzureConstants.ACCOUNT_NAME).evaluateAttributeExpressions().getValue();
-        final String accountKey = context.getProperty(AzureConstants.ACCOUNT_KEY).evaluateAttributeExpressions().getValue();
-        final String sasToken = context.getProperty(PROP_SAS_TOKEN).evaluateAttributeExpressions().getValue();
 
-        CloudBlobClient cloudBlobClient;
-
-        try {
-            // sas token and acct name/key have different ways of creating a secure connection (e.g. new StorageCredentialsAccountAndKey didn't work)
-            if (StringUtils.isNotBlank(sasToken)) {
-                String storageConnectionString = String.format(AzureConstants.FORMAT_BASE_URI, accountName);
-                StorageCredentials creds = new StorageCredentialsSharedAccessSignature(sasToken);
-                cloudBlobClient = new CloudBlobClient(new URI(storageConnectionString), creds);
-            } else {
-                String blobConnString = String.format(AzureConstants.FORMAT_BLOB_CONNECTION_STRING, accountName, accountKey);
-                CloudStorageAccount storageAccount = CloudStorageAccount.parse(blobConnString);
-                cloudBlobClient = storageAccount.createCloudBlobClient();
-            }
-        } catch (IllegalArgumentException | URISyntaxException e) {
-            getLogger().error("Invalid connection string URI for '{}'", new Object[]{context.getName()}, e);
-            throw new IllegalArgumentException(e);
-        } catch (InvalidKeyException e) {
-            getLogger().error("Invalid connection credentials for '{}'", new Object[]{context.getName()}, e);
-            throw new IllegalArgumentException(e);
-        }
-
-        return cloudBlobClient;
-    }
 
 }
