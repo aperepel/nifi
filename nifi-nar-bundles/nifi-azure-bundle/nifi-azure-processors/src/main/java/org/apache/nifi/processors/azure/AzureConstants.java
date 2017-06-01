@@ -24,7 +24,9 @@ public final class AzureConstants {
     public static final String PAGE = "Page";
 
     public static final PropertyDescriptor ACCOUNT_KEY = new PropertyDescriptor.Builder().name("storage-account-key").displayName("Storage Account Key")
-            .description("The storage account key.  There are certain risks in allowing the account key to be stored as a flowfile" +
+            .description("The storage account key. This is an admin-like password providing access to every container in this account. It is recommended " +
+                    "one uses Shared Access Signature (SAS) token instead for fine-grained control with policies. " +
+                    "There are certain risks in allowing the account key to be stored as a flowfile" +
                     "attribute. While it does provide for a more flexible flow by allowing the account key to " +
                     "be fetched dynamically from a flow file attribute, care must be taken to restrict access to " +
                     "the event provenance data (e.g. by strictly controlling the policies governing provenance for this Processor). " +
@@ -39,11 +41,11 @@ public final class AzureConstants {
                     "In addition, the provenance repositories may be put on encrypted disk partitions.")
             .addValidator(StandardValidators.NON_EMPTY_VALIDATOR).expressionLanguageSupported(true).required(true).sensitive(true).build();
 
-    public static final PropertyDescriptor CONTAINER = new PropertyDescriptor.Builder().name("container-name").displayName("Container name")
-            .description("Name of the azure storage container").addValidator(StandardValidators.NON_EMPTY_VALIDATOR).expressionLanguageSupported(true).required(true).build();
+    public static final PropertyDescriptor CONTAINER = new PropertyDescriptor.Builder().name("container-name").displayName("Container Name")
+            .description("Name of the Azure storage container").addValidator(StandardValidators.NON_EMPTY_VALIDATOR).expressionLanguageSupported(true).required(true).build();
 
     // use HTTPS by default as per MSFT recommendation
-    public static final String FORMAT_DEFAULT_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=%s;AccountKey=%s";
+    public static final String FORMAT_BLOB_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=%s;AccountKey=%s";
     public static final String FORMAT_BASE_URI = "https://%s.blob.core.windows.net";
 
 

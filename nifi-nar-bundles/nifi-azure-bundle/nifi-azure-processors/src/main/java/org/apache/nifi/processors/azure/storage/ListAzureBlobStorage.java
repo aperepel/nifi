@@ -19,7 +19,6 @@ package org.apache.nifi.processors.azure.storage;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageCredentials;
 import com.microsoft.azure.storage.StorageCredentialsSharedAccessSignature;
-import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.StorageUri;
 import com.microsoft.azure.storage.blob.BlobListingDetails;
 import com.microsoft.azure.storage.blob.BlobProperties;
@@ -29,6 +28,7 @@ import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import com.microsoft.azure.storage.blob.CloudBlockBlob;
 import com.microsoft.azure.storage.blob.ListBlobItem;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.nifi.annotation.behavior.InputRequirement;
 import org.apache.nifi.annotation.behavior.InputRequirement.Requirement;
 import org.apache.nifi.annotation.behavior.Stateful;
@@ -90,7 +90,7 @@ public class ListAzureBlobStorage extends AbstractListProcessor<BlobInfo> {
 
     public static final PropertyDescriptor PROP_SAS_TOKEN = new PropertyDescriptor.Builder()
             .name("SAS String")
-            .description("Shared Access Signature string, including the leading ?")
+            .description("Shared Access Signature string, including the leading '?'. Specify either SAS (recommended) or Account Key")
             .required(false)
             .expressionLanguageSupported(true)
             .sensitive(true)
@@ -99,11 +99,11 @@ public class ListAzureBlobStorage extends AbstractListProcessor<BlobInfo> {
 
 
     private static final List<PropertyDescriptor> PROPERTIES = Collections.unmodifiableList(Arrays.asList(
+            AzureConstants.CONTAINER,
+            PROP_SAS_TOKEN,
             AzureConstants.ACCOUNT_NAME,
             AzureConstants.ACCOUNT_KEY,
-            AzureConstants.CONTAINER,
-            PROP_PREFIX,
-            PROP_SAS_TOKEN));
+            PROP_PREFIX));
 
     @Override
     protected List<PropertyDescriptor> getSupportedPropertyDescriptors() {
@@ -120,7 +120,7 @@ public class ListAzureBlobStorage extends AbstractListProcessor<BlobInfo> {
                 || (StringUtils.isNotBlank(sasToken) && StringUtils.isNotBlank(acctName))) {
             results.add(new ValidationResult.Builder().subject("Azure Credentials")
                         .valid(false)
-                        .explanation("Either Azure Account Key or Shared Access Signature required, but not both")
+                        .explanation("either Azure Account Key or Shared Access Signature required, but not both")
                         .build());
         }
 
@@ -200,8 +200,8 @@ public class ListAzureBlobStorage extends AbstractListProcessor<BlobInfo> {
                     listing.add(builder.build());
                 }
             }
-        } catch (IllegalArgumentException | URISyntaxException | StorageException e) {
-            throw (new IOException(e));
+        } catch (Throwable t) {
+            throw new IOException(ExceptionUtils.getRootCause(t));
         }
         return listing;
     }
@@ -210,21 +210,18 @@ public class ListAzureBlobStorage extends AbstractListProcessor<BlobInfo> {
         final String accountName = context.getProperty(AzureConstants.ACCOUNT_NAME).evaluateAttributeExpressions().getValue();
         final String accountKey = context.getProperty(AzureConstants.ACCOUNT_KEY).evaluateAttributeExpressions().getValue();
         final String sasToken = context.getProperty(PROP_SAS_TOKEN).evaluateAttributeExpressions().getValue();
-        final String storageConnectionString;
 
         CloudBlobClient cloudBlobClient;
 
         try {
-
-
+            // sas token and acct name/key have different ways of creating a secure connection (e.g. new StorageCredentialsAccountAndKey didn't work)
             if (StringUtils.isNotBlank(sasToken)) {
-                storageConnectionString = String.format(AzureConstants.FORMAT_BASE_URI, accountName);
-                // TODO refactor for acct name/key as well
-                StorageCredentials sasCreds = new StorageCredentialsSharedAccessSignature(sasToken);
-                cloudBlobClient = new CloudBlobClient(new URI(storageConnectionString), sasCreds);
+                String storageConnectionString = String.format(AzureConstants.FORMAT_BASE_URI, accountName);
+                StorageCredentials creds = new StorageCredentialsSharedAccessSignature(sasToken);
+                cloudBlobClient = new CloudBlobClient(new URI(storageConnectionString), creds);
             } else {
-                storageConnectionString = String.format(AzureConstants.FORMAT_DEFAULT_CONNECTION_STRING, accountName, accountKey);
-                CloudStorageAccount storageAccount = CloudStorageAccount.parse(storageConnectionString);
+                String blobConnString = String.format(AzureConstants.FORMAT_BLOB_CONNECTION_STRING, accountName, accountKey);
+                CloudStorageAccount storageAccount = CloudStorageAccount.parse(blobConnString);
                 cloudBlobClient = storageAccount.createCloudBlobClient();
             }
         } catch (IllegalArgumentException | URISyntaxException e) {
