@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.apache.nifi.processors.azure.AbstractAzureProcessor;
+import org.apache.nifi.processors.azure.AbstractAzureBlobProcessor;
 import org.apache.nifi.processors.azure.storage.utils.Azure;
 import org.apache.nifi.util.MockFlowFile;
 import org.apache.nifi.util.TestRunner;
@@ -67,7 +67,7 @@ public class ITFetchAzureBlobStorage {
             runner.enqueue(new byte[0], attributes);
             runner.run();
 
-            runner.assertAllFlowFilesTransferred(AbstractAzureProcessor.REL_SUCCESS, 1);
+            runner.assertAllFlowFilesTransferred(AbstractAzureBlobProcessor.REL_SUCCESS, 1);
             List<MockFlowFile> flowFilesForRelationship = runner.getFlowFilesForRelationship(FetchAzureBlobStorage.REL_SUCCESS);
             for (MockFlowFile flowFile : flowFilesForRelationship) {
                 flowFile.assertContentEquals("0123456789".getBytes());
