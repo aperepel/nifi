@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.nifi.processors.azure;
+package org.apache.nifi.processors.azure.storage.utils;
 
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.StorageCredentials;
@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class AzureConstants {
+public final class Azure {
     public static final String BLOCK = "Block";
     public static final String PAGE = "Page";
 
@@ -73,25 +73,25 @@ public final class AzureConstants {
     public static final String FORMAT_BLOB_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=%s;AccountKey=%s";
     public static final String FORMAT_BASE_URI = "https://%s.blob.core.windows.net";
 
-    private AzureConstants() {
+    private Azure() {
         // do not instantiate
     }
 
     public static CloudBlobClient createCloudBlobClient(ProcessContext context, ComponentLog logger) {
-        final String accountName = context.getProperty(AzureConstants.ACCOUNT_NAME).evaluateAttributeExpressions().getValue();
-        final String accountKey = context.getProperty(AzureConstants.ACCOUNT_KEY).evaluateAttributeExpressions().getValue();
-        final String sasToken = context.getProperty(AzureConstants.PROP_SAS_TOKEN).evaluateAttributeExpressions().getValue();
+        final String accountName = context.getProperty(Azure.ACCOUNT_NAME).evaluateAttributeExpressions().getValue();
+        final String accountKey = context.getProperty(Azure.ACCOUNT_KEY).evaluateAttributeExpressions().getValue();
+        final String sasToken = context.getProperty(Azure.PROP_SAS_TOKEN).evaluateAttributeExpressions().getValue();
 
         CloudBlobClient cloudBlobClient;
 
         try {
             // sas token and acct name/key have different ways of creating a secure connection (e.g. new StorageCredentialsAccountAndKey didn't work)
             if (StringUtils.isNotBlank(sasToken)) {
-                String storageConnectionString = String.format(AzureConstants.FORMAT_BASE_URI, accountName);
+                String storageConnectionString = String.format(Azure.FORMAT_BASE_URI, accountName);
                 StorageCredentials creds = new StorageCredentialsSharedAccessSignature(sasToken);
                 cloudBlobClient = new CloudBlobClient(new URI(storageConnectionString), creds);
             } else {
-                String blobConnString = String.format(AzureConstants.FORMAT_BLOB_CONNECTION_STRING, accountName, accountKey);
+                String blobConnString = String.format(Azure.FORMAT_BLOB_CONNECTION_STRING, accountName, accountKey);
                 CloudStorageAccount storageAccount = CloudStorageAccount.parse(blobConnString);
                 cloudBlobClient = storageAccount.createCloudBlobClient();
             }

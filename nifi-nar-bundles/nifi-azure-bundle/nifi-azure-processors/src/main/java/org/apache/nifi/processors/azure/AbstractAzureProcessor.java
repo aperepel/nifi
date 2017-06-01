@@ -29,6 +29,7 @@ import org.apache.nifi.processor.ProcessContext;
 import org.apache.nifi.processor.Relationship;
 
 import com.microsoft.azure.storage.CloudStorageAccount;
+import org.apache.nifi.processors.azure.storage.utils.Azure;
 
 public abstract class AbstractAzureProcessor extends AbstractProcessor {
 
@@ -37,19 +38,19 @@ public abstract class AbstractAzureProcessor extends AbstractProcessor {
     private static final Set<Relationship> RELATIONSHIPS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(REL_SUCCESS, REL_FAILURE)));
 
     protected CloudStorageAccount createStorageConnection(ProcessContext context) {
-        final String accountName = context.getProperty(AzureConstants.ACCOUNT_NAME).evaluateAttributeExpressions().getValue();
-        final String accountKey = context.getProperty(AzureConstants.ACCOUNT_KEY).evaluateAttributeExpressions().getValue();
+        final String accountName = context.getProperty(Azure.ACCOUNT_NAME).evaluateAttributeExpressions().getValue();
+        final String accountKey = context.getProperty(Azure.ACCOUNT_KEY).evaluateAttributeExpressions().getValue();
         return createStorageConnectionFromNameAndKey(accountName, accountKey);
     }
 
     protected CloudStorageAccount createStorageConnection(ProcessContext context, FlowFile flowFile) {
-        final String accountName = context.getProperty(AzureConstants.ACCOUNT_NAME).evaluateAttributeExpressions(flowFile).getValue();
-        final String accountKey = context.getProperty(AzureConstants.ACCOUNT_KEY).evaluateAttributeExpressions(flowFile).getValue();
+        final String accountName = context.getProperty(Azure.ACCOUNT_NAME).evaluateAttributeExpressions(flowFile).getValue();
+        final String accountKey = context.getProperty(Azure.ACCOUNT_KEY).evaluateAttributeExpressions(flowFile).getValue();
         return createStorageConnectionFromNameAndKey(accountName, accountKey);
     }
 
     private CloudStorageAccount createStorageConnectionFromNameAndKey(String accountName, String accountKey) {
-        final String storageConnectionString = String.format(AzureConstants.FORMAT_BLOB_CONNECTION_STRING, accountName, accountKey);
+        final String storageConnectionString = String.format(Azure.FORMAT_BLOB_CONNECTION_STRING, accountName, accountKey);
         try {
             return createStorageAccountFromConnectionString(storageConnectionString);
         } catch (InvalidKeyException | IllegalArgumentException | URISyntaxException e) {
